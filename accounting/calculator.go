@@ -6,8 +6,8 @@ import (
 	"slices"
 )
 
-// CalculateBalance calculates the final balance for each person involved in the transactions
-func CalculateBalance(transactions Transactions) Balances {
+// calculateBalance calculates the final balance for each person involved in the transactions
+func calculateBalance(transactions Transactions) Balances {
 	b := make(map[string]float64, len(transactions))
 	for _, t := range transactions {
 		if t.From != t.To {
@@ -26,8 +26,8 @@ func CalculateBalance(transactions Transactions) Balances {
 	return finalB
 }
 
-// MinimizeTransactions finds the minimum number of transactions to balance to 0 the amount of each person
-func MinimizeTransactions(balances Balances) Statement {
+// minimizeTransactions finds the minimum number of transactions to balance to 0 the amount of each person
+func minimizeTransactions(balances Balances) Statement {
 	finalBalances := append(Balances{}, balances...)
 	slices.SortFunc(finalBalances, func(b1 Balance, b2 Balance) int {
 		return cmp.Compare(b1.Amount, b2.Amount)

@@ -73,7 +73,7 @@ func Test_Calculate_Balance(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			actual := CalculateBalance(s.input)
+			actual := calculateBalance(s.input)
 
 			slices.SortFunc(s.expected, func(a, b Balance) int {
 				return cmp.Compare(a.Name, b.Name)
@@ -259,7 +259,7 @@ func Test_Minimize_Transactions(t *testing.T) {
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
 
-			actual := MinimizeTransactions(s.input)
+			actual := minimizeTransactions(s.input)
 
 			slices.SortFunc(actual.UpdatedBalances, func(a, b Balance) int {
 				return cmp.Compare(a.Name, b.Name)
