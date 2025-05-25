@@ -11,8 +11,11 @@ func CalculateBalance(transactions Transactions) Balances {
 	b := make(map[string]float64, len(transactions))
 	for _, t := range transactions {
 		if t.From != t.To {
-			b[t.From] = b[t.From] + t.Amount
-			b[t.To] = b[t.To] - t.Amount
+			b[t.From] += t.Amount
+			b[t.To] -= t.Amount
+		} else {
+			// if self just record it as 0, for person to be accounted in balance
+			b[t.To] += 0.0
 		}
 	}
 
@@ -23,39 +26,38 @@ func CalculateBalance(transactions Transactions) Balances {
 	return finalB
 }
 
-// ReduceTransactions finds the minimum number of transactions to balance to 0 the amount of each person
-func ReduceTransactions(balances Balances) ReductionResult {
-	var traverseBalances func(b Balances, t Transactions) (Balances, Transactions)
-	traverseBalances = func(b Balances, t Transactions) (Balances, Transactions) {
-		slices.SortFunc(b, func(b1 Balance, b2 Balance) int {
-			return cmp.Compare(b1.Amount, b2.Amount)
-		})
+// MinimizeTransactions finds the minimum number of transactions to balance to 0 the amount of each person
+func MinimizeTransactions(balances Balances) Statement {
+	finalBalances := append(Balances{}, balances...)
+	slices.SortFunc(finalBalances, func(b1 Balance, b2 Balance) int {
+		return cmp.Compare(b1.Amount, b2.Amount)
+	})
 
-		negIdx, posIdx := 0, len(b)-1
-		neg := b[negIdx]
-		pos := b[posIdx]
+	finalTransactions := make(Transactions, 0, len(balances))
 
-		if neg.Amount == 0.0 || pos.Amount == 0.0 {
-			return b, t
-		}
+	negIdx, posIdx := 0, len(finalBalances)-1
+	for posIdx > negIdx {
+		neg := finalBalances[negIdx]
+		pos := finalBalances[posIdx]
 
 		diff := pos.Amount - math.Abs(neg.Amount)
 
 		// tAmount is the lowest between two parties from transaction
 		tAmount := math.Min(math.Abs(neg.Amount), pos.Amount)
-		t = append(t, Transaction{From: neg.Name, To: pos.Name, Amount: tAmount})
+		finalTransactions = append(finalTransactions, Transaction{From: neg.Name, To: pos.Name, Amount: tAmount})
 
 		neg.Amount = math.Min(0.0, diff) // if < 0 still has debt
 		pos.Amount = math.Max(0.0, diff) // if > 0 still has to receive
 
-		b[negIdx] = neg
-		b[posIdx] = pos
-		return traverseBalances(b, t)
-	}
+		finalBalances[negIdx], finalBalances[posIdx] = neg, pos
 
-	finalBalances, finalTransactions := traverseBalances(
-		append(Balances{}, balances...),
-		make(Transactions, 0, len(balances)),
-	)
-	return ReductionResult{finalBalances, finalTransactions}
+		if neg.Amount == 0.0 {
+			negIdx++
+		}
+
+		if pos.Amount == 0.0 {
+			posIdx--
+		}
+	}
+	return Statement{finalBalances, finalTransactions}
 }
