@@ -75,14 +75,10 @@ func Test_Calculate_Balance(t *testing.T) {
 		t.Run(s.name, func(t *testing.T) {
 			actual := calculateBalance(s.input)
 
-			slices.SortFunc(s.expected, func(a, b Balance) int {
-				return cmp.Compare(a.Name, b.Name)
-			})
-			slices.SortFunc(actual, func(a, b Balance) int {
-				return cmp.Compare(a.Name, b.Name)
-			})
-
-			if !reflect.DeepEqual(s.expected, actual) {
+			if !reflect.DeepEqual(
+				sortedBalances(s.expected),
+				sortedBalances(actual),
+			) {
 				t.Errorf("\nExpected:	%+v\nGot:		%+v", s.expected, actual)
 			}
 		})
@@ -258,29 +254,36 @@ func Test_Minimize_Transactions(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-
 			actual := minimizeTransactions(s.input)
 
-			slices.SortFunc(actual.UpdatedBalances, func(a, b Balance) int {
-				return cmp.Compare(a.Name, b.Name)
-			})
-			slices.SortFunc(s.expected.UpdatedBalances, func(a, b Balance) int {
-				return cmp.Compare(a.Name, b.Name)
-			})
-
-			slices.SortFunc(actual.Transactions, func(a, b Transaction) int {
-				return cmp.Compare(a.To, b.To) + cmp.Compare(a.From, b.From)
-			})
-			slices.SortFunc(s.expected.Transactions, func(a, b Transaction) int {
-				return cmp.Compare(a.To, b.To) + cmp.Compare(a.From, b.From)
-			})
-
-			if !reflect.DeepEqual(s.expected.UpdatedBalances, actual.UpdatedBalances) {
+			if !reflect.DeepEqual(
+				sortedBalances(s.expected.UpdatedBalances),
+				sortedBalances(actual.UpdatedBalances),
+			) {
 				t.Errorf("\nBalances:\nExpected:	%+v\nGot:		%+v", s.expected.UpdatedBalances, actual.UpdatedBalances)
 			}
-			if !reflect.DeepEqual(s.expected.Transactions, actual.Transactions) {
+			if !reflect.DeepEqual(
+				sortedTransactions(s.expected.Transactions),
+				sortedTransactions(actual.Transactions),
+			) {
 				t.Errorf("\nTransactions:\nExpected:	%+v\nGot:		%+v", s.expected.Transactions, actual.Transactions)
 			}
 		})
 	}
+}
+
+func sortedBalances(b Balances) Balances {
+	newB := append(Balances{}, b...)
+	slices.SortFunc(newB, func(a, b Balance) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+	return newB
+}
+
+func sortedTransactions(t Transactions) Transactions {
+	newT := append(Transactions{}, t...)
+	slices.SortFunc(newT, func(a, b Transaction) int {
+		return cmp.Compare(a.To, b.To) + cmp.Compare(a.From, b.From)
+	})
+	return newT
 }

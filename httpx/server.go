@@ -21,9 +21,7 @@ type HttpServer struct {
 
 func NewServer(balanceService BalanceService, transactionService TransactionService) *HttpServer {
 	serverMux := &http.ServeMux{}
-
-	e := newEndpointHandler(balanceService, transactionService)
-	e.register(serverMux)
+	register(serverMux, balanceService, transactionService)
 
 	hs := HttpServer{
 		serverMux: serverMux,

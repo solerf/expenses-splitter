@@ -13,35 +13,23 @@ import (
 
 var invalidContentType = errors.New("Invalid `Content-Type` header. Expected `application/json`")
 
-type httpHandler func(http.ResponseWriter, *http.Request) error
+type customHandler func(http.ResponseWriter, *http.Request) error
 
-type endpoints struct {
-	balanceService     BalanceService
-	transactionService TransactionService
-}
-
-func newEndpointHandler(balanceService BalanceService, transactionService TransactionService) *endpoints {
-	return &endpoints{
-		balanceService:     balanceService,
-		transactionService: transactionService,
-	}
-}
-
-func (e *endpoints) register(mux *http.ServeMux) {
+func register(mux *http.ServeMux, balanceService BalanceService, transactionService TransactionService) {
 	mux.HandleFunc(
 		"POST /balance/calculate",
-		mainHandlerFunc(validateContentType(balanceCalculate(e.balanceService))),
+		mainHandlerFunc(validateContentType(balanceCalculate(balanceService))),
 	)
 
 	mux.HandleFunc(
 		"POST /transaction/minimize",
-		mainHandlerFunc(validateContentType(minimizeTransaction(e.transactionService))),
+		mainHandlerFunc(validateContentType(minimizeTransaction(transactionService))),
 	)
 
 	mux.HandleFunc("/", http.NotFound)
 }
 
-func mainHandlerFunc(innerHandler httpHandler) http.HandlerFunc {
+func mainHandlerFunc(innerHandler customHandler) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		if err := innerHandler(writer, request); err != nil {
 			switch {
@@ -54,16 +42,20 @@ func mainHandlerFunc(innerHandler httpHandler) http.HandlerFunc {
 	}
 }
 
-func validateContentType(next httpHandler) httpHandler {
+func validateContentType(next customHandler) customHandler {
 	return func(writer http.ResponseWriter, request *http.Request) error {
 		if !slices.Contains(request.Header.Values("Content-Type"), "application/json") {
 			return invalidContentType
 		}
-		return next(writer, request)
+
+		if next != nil {
+			return next(writer, request)
+		}
+		return nil
 	}
 }
 
-func balanceCalculate(service BalanceService) httpHandler {
+func balanceCalculate(service BalanceService) customHandler {
 	return func(writer http.ResponseWriter, request *http.Request) error {
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
@@ -88,7 +80,7 @@ func balanceCalculate(service BalanceService) httpHandler {
 	}
 }
 
-func minimizeTransaction(service TransactionService) httpHandler {
+func minimizeTransaction(service TransactionService) customHandler {
 	return func(writer http.ResponseWriter, request *http.Request) error {
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
