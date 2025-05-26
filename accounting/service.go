@@ -1,7 +1,7 @@
 package accounting
 
-type Service struct {
-}
+// Service just represents a way to access calculate and minimize operations
+type Service struct{}
 
 func NewService() *Service {
 	return &Service{}

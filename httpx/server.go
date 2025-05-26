@@ -24,6 +24,7 @@ type HttpServer struct {
 	osSigChan chan os.Signal
 }
 
+// NewServer set up application server
 func NewServer(balanceService BalanceService, transactionService TransactionService) *HttpServer {
 	serverMux := &http.ServeMux{}
 	register(serverMux, balanceService, transactionService)
@@ -40,6 +41,7 @@ func NewServer(balanceService BalanceService, transactionService TransactionServ
 	return &hs
 }
 
+// Run runs server
 func (hs *HttpServer) Run() {
 	go func() {
 		log.Println("server started at :8000")

@@ -15,6 +15,7 @@ var invalidContentType = errors.New("Invalid `Content-Type` header. Expected `ap
 
 type customHandler func(http.ResponseWriter, *http.Request) error
 
+// register register in the http.ServerMux all endpoints
 func register(mux *http.ServeMux, balanceService BalanceService, transactionService TransactionService) {
 	mux.HandleFunc(
 		"POST /balance/calculate",
@@ -29,6 +30,7 @@ func register(mux *http.ServeMux, balanceService BalanceService, transactionServ
 	mux.HandleFunc("/", http.NotFound)
 }
 
+// mainHandlerFunc generic handler for ServerMux
 func mainHandlerFunc(innerHandler customHandler) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		if err := innerHandler(writer, request); err != nil {
@@ -42,6 +44,7 @@ func mainHandlerFunc(innerHandler customHandler) http.HandlerFunc {
 	}
 }
 
+// validateContentType handler to just validate if the request has the correct content type
 func validateContentType(next customHandler) customHandler {
 	return func(writer http.ResponseWriter, request *http.Request) error {
 		if !slices.Contains(request.Header.Values("Content-Type"), "application/json") {
@@ -55,6 +58,9 @@ func validateContentType(next customHandler) customHandler {
 	}
 }
 
+// balanceCalculate entry point for calculate balance
+// accepts a JSON representation of a transactions array
+// and returns an array of balances
 func balanceCalculate(service BalanceService) customHandler {
 	return func(writer http.ResponseWriter, request *http.Request) error {
 		defer func(Body io.ReadCloser) {
