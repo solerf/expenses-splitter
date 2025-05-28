@@ -1,0 +1,12 @@
+---
+logging:
+  level: INFO
+  loggers:
+    org.billsplitter: DEBUG
+    org.eclipse: OFF
+    io.dropwizard: INFO
+
+server:
+  applicationConnectors:
+    - type: http
+      port: 8000
